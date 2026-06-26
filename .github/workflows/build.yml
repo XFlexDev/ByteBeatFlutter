@@ -21,6 +21,9 @@ jobs:
           channel: 'stable'
       - name: Fake structure
         run: |
+          mv pubspec.yaml pubspec.bak
+          flutter create --org com.kreatix --project-name bytebeat .
+          mv pubspec.bak pubspec.yaml
           mkdir -p lib
           cp main.dart lib/main.dart
       - name: Install dependencies
@@ -48,6 +51,9 @@ jobs:
           channel: 'stable'
       - name: Fake structure
         run: |
+          mv pubspec.yaml pubspec.bak
+          flutter create --org com.kreatix --project-name bytebeat .
+          mv pubspec.bak pubspec.yaml
           mkdir -p lib
           cp main.dart lib/main.dart
       - name: Install dependencies
