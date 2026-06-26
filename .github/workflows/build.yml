@@ -20,7 +20,7 @@ jobs:
         with:
           channel: 'stable'
       - name: Fake structure
-         run: |
+        run: |
           mkdir -p lib
           cp main.dart lib/main.dart
       - name: Install dependencies
