@@ -19,31 +19,30 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-      - name: Fake structure
+      - name: Create Flutter Android project
         run: |
-          mkdir -p ../tmp
-          cp main.dart ../tmp/main.dart
-          cp pubspec.yaml ../tmp/pubspec.yaml
-          rm -f main.dart pubspec.yaml
+          mkdir -p bytebeat-android
+          cd bytebeat-android
           flutter create --org com.kreatix --project-name bytebeat --platforms=android .
-          cp ../tmp/main.dart lib/main.dart
-          cp ../tmp/pubspec.yaml pubspec.yaml
-          echo "android.newDsl=false" >> android/gradle.properties
-      - name: Install dependencies & patch jcenter
-        run: |
-          flutter pub get
-          find /home/runner/.pub-cache/ -name "build.gradle" -exec sed -i 's/jcenter()/mavenCentral()/g' {} +
-      - name: Build Android APK & AAB
-        run: |
-          flutter build apk --release -t lib/main.dart
-          flutter build appbundle --release -t lib/main.dart
+          # Copy original source files if they exist
+          [ -f ../lib/main.dart ] && cp ../lib/main.dart lib/main.dart
+          [ -f ../pubspec.yaml ] && cp ../pubspec.yaml pubspec.yaml
+      - name: Install dependencies
+        working-directory: bytebeat-android
+        run: flutter pub get
+      - name: Build Android APK
+        working-directory: bytebeat-android
+        run: flutter build apk --release
+      - name: Build Android App Bundle
+        working-directory: bytebeat-android
+        run: flutter build appbundle --release
       - name: Upload Android Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Bytebeat-Android-Builds
           path: |
-            build/app/outputs/flutter-apk/app-release.apk
-            build/app/outputs/bundle/release/app-release.aab
+            bytebeat-android/build/app/outputs/flutter-apk/app-release.apk
+            bytebeat-android/build/app/outputs/bundle/release/app-release.aab
 
   build-ios:
     runs-on: macos-latest
@@ -54,27 +53,29 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-      - name: Fake structure
+      - name: Create Flutter iOS project
         run: |
-          mkdir -p ../tmp
-          cp main.dart ../tmp/main.dart
-          cp pubspec.yaml ../tmp/pubspec.yaml
-          rm -f main.dart pubspec.yaml
+          mkdir -p bytebeat-ios
+          cd bytebeat-ios
           flutter create --org com.kreatix --project-name bytebeat --platforms=ios .
-          cp ../tmp/main.dart lib/main.dart
-          cp ../tmp/pubspec.yaml pubspec.yaml
+          # Copy original source files if they exist
+          [ -f ../lib/main.dart ] && cp ../lib/main.dart lib/main.dart
+          [ -f ../pubspec.yaml ] && cp ../pubspec.yaml pubspec.yaml
+          # Disable code signing for unsigned build
           echo "CODE_SIGNING_ALLOWED=NO" >> ios/Flutter/Release.xcconfig
           echo "CODE_SIGNING_REQUIRED=NO" >> ios/Flutter/Release.xcconfig
           echo "CODE_SIGN_IDENTITY=" >> ios/Flutter/Release.xcconfig
           echo "DEVELOPMENT_TEAM=" >> ios/Flutter/Release.xcconfig
       - name: Install dependencies
+        working-directory: bytebeat-ios
         run: flutter pub get
       - name: Build iOS App Unsigned
-        run: flutter build ios --no-codesign --release -t lib/main.dart
+        working-directory: bytebeat-ios
+        run: flutter build ios --no-codesign --release
       - name: Create Unsigned IPA
         run: |
           mkdir -p build/ios/iphoneos/Payload
-          cp -r build/ios/iphoneos/Runner.app build/ios/iphoneos/Payload/
+          cp -r bytebeat-ios/build/ios/iphoneos/Runner.app build/ios/iphoneos/Payload/
           cd build/ios/iphoneos
           zip -r Bytebeat-Unsigned.ipa Payload
       - name: Upload iOS Artifact
