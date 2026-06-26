@@ -21,13 +21,18 @@ jobs:
           channel: 'stable'
       - name: Fake structure
         run: |
-          mv pubspec.yaml pubspec.bak
-          flutter create --org com.kreatix --project-name bytebeat .
-          mv pubspec.bak pubspec.yaml
-          mkdir -p lib
-          cp main.dart lib/main.dart
-      - name: Install dependencies
-        run: flutter pub get
+          mkdir -p ../tmp
+          cp main.dart ../tmp/main.dart
+          cp pubspec.yaml ../tmp/pubspec.yaml
+          rm -f main.dart pubspec.yaml
+          flutter create --org com.kreatix --project-name bytebeat --platforms=android .
+          cp ../tmp/main.dart lib/main.dart
+          cp ../tmp/pubspec.yaml pubspec.yaml
+          echo "android.newDsl=false" >> android/gradle.properties
+      - name: Install dependencies & patch jcenter
+        run: |
+          flutter pub get
+          find /home/runner/.pub-cache/ -name "build.gradle" -exec sed -i 's/jcenter()/mavenCentral()/g' {} +
       - name: Build Android APK & AAB
         run: |
           flutter build apk --release -t lib/main.dart
@@ -51,11 +56,17 @@ jobs:
           channel: 'stable'
       - name: Fake structure
         run: |
-          mv pubspec.yaml pubspec.bak
-          flutter create --org com.kreatix --project-name bytebeat .
-          mv pubspec.bak pubspec.yaml
-          mkdir -p lib
-          cp main.dart lib/main.dart
+          mkdir -p ../tmp
+          cp main.dart ../tmp/main.dart
+          cp pubspec.yaml ../tmp/pubspec.yaml
+          rm -f main.dart pubspec.yaml
+          flutter create --org com.kreatix --project-name bytebeat --platforms=ios .
+          cp ../tmp/main.dart lib/main.dart
+          cp ../tmp/pubspec.yaml pubspec.yaml
+          echo "CODE_SIGNING_ALLOWED=NO" >> ios/Flutter/Release.xcconfig
+          echo "CODE_SIGNING_REQUIRED=NO" >> ios/Flutter/Release.xcconfig
+          echo "CODE_SIGN_IDENTITY=" >> ios/Flutter/Release.xcconfig
+          echo "DEVELOPMENT_TEAM=" >> ios/Flutter/Release.xcconfig
       - name: Install dependencies
         run: flutter pub get
       - name: Build iOS App Unsigned
