@@ -19,12 +19,16 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+      - name: Fake structure
+         run: |
+          mkdir -p lib
+          cp main.dart lib/main.dart
       - name: Install dependencies
         run: flutter pub get
       - name: Build Android APK & AAB
         run: |
-          flutter build apk --release
-          flutter build appbundle --release
+          flutter build apk --release -t lib/main.dart
+          flutter build appbundle --release -t lib/main.dart
       - name: Upload Android Artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -42,10 +46,14 @@ jobs:
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
+      - name: Fake structure
+        run: |
+          mkdir -p lib
+          cp main.dart lib/main.dart
       - name: Install dependencies
         run: flutter pub get
       - name: Build iOS App Unsigned
-        run: flutter build ios --no-codesign --release
+        run: flutter build ios --no-codesign --release -t lib/main.dart
       - name: Create Unsigned IPA
         run: |
           mkdir -p build/ios/iphoneos/Payload
